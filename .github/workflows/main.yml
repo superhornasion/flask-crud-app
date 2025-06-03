@@ -72,7 +72,7 @@ jobs:
         echo "     --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \\"
         echo "     --name ${{ env.AZURE_ACI_NAME }} \\"
         echo "     --image ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest \\"
-        echo "     --dns-name-label myflaskapp-uni
+        echo "     --dns-name-label myflaskapp-uni \\"
         echo "     --ports 80 \\"
         echo "     --os-type Linux \\"
         echo "     --cpu 1 \\"
