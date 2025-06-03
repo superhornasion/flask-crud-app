@@ -72,7 +72,7 @@ jobs:
         echo "     --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \\"
         echo "     --name ${{ env.AZURE_ACI_NAME }} \\"
         echo "     --image ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest \\"
-        echo "     --dns-name-label api-topicos-alt-deploy \\ # <--- REEMPLAZA CON UN NOMBRE DNS ÚNICO y sencillo (ej. tuapprodmolinaaci)
+        echo "     --dns-name-label myflaskapp-uni
         echo "     --ports 80 \\"
         echo "     --os-type Linux \\"
         echo "     --cpu 1 \\"
@@ -80,6 +80,5 @@ jobs:
         echo "     --environment-variables DB_CONNECTION_STRING='${{ secrets.AZURE_SQL_DB_CONNECTION_STRING }}'"
         echo "--------------------------------------------------------"
         echo "Una vez que el comando 'az container create' termine, tu aplicación estará disponible en la URL FQDN (Fully Qualified Domain Name) que aparecerá en la salida, generalmente algo como:"
-        echo "http://api-topicos-alt-deploy.<tu_region_azure>.azurecontainer.io/"
-        echo "(Asegúrate de reemplazar '<tu_region_azure>' con la región de Azure donde creaste el ACI, ej. eastus, westus, etc.)"
+        echo "http://api-topicos-alt-deploy.eastus.azurecontainer.io/"
         echo "--------------------------------------------------------"
