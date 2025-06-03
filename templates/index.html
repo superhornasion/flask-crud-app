@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de tareas</title>
+</head>
+<body>
+    <h1>Lista de tareas</h1>
+    <form method="POST" action="/add">
+        <input type="text" name="title" placeholder="Nueva tarea" required>
+        <button type="submit">Agregar</button>
+    </form>
+
+    <ul>
+        {% for task in tasks %}
+            <li>
+                <form style="display:inline;" method="POST" action="/toggle/{{ task[0] }}">
+                    <button type="submit">{% if task[2] %}✅{% else %}⬜{% endif %}</button>
+                </form>
+                {{ task[1] }}
+                <form style="display:inline;" method="POST" action="/delete/{{ task[0] }}">
+                    <button type="submit">🗑️</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
