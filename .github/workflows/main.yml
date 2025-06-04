@@ -52,7 +52,9 @@ jobs:
 
     - name: Crear y hacerle push a la imagen Docker hacia el ACR
       run: |
+        # Construye la imagen Docker desde tu Dockerfile en la raíz del repo
         docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
+        # Sube la imagen construida a tu ACR
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
 
     # ----- DESPLIEGUE AUTOMATIZADO EN ACI -----
@@ -76,7 +78,7 @@ jobs:
           --os-type Linux \
           --cpu 1 \
           --memory 1.5 \
-          --secure-environment-variables DB_CONNECTION_STRING="${{ secrets.SQL_DB_CONNECTION_STRING }}" \
+          --secure-environment-variables DB_CONNECTION_STRING="${{ secrets.ACR_SQL_DB_CONNECTION_STRING }}" \ # <-- ¡Usando tu nombre de secreto!
           --registry-login-server ${{ env.AZURE_CONTAINER_REGISTRY }} \
           --registry-username ${{ secrets.ACR_USERNAME }} \
           --registry-password ${{ secrets.ACR_PASSWORD }}
@@ -87,6 +89,7 @@ jobs:
         echo "¡Tu aplicación estará disponible en: http://$ACI_FQDN"
         echo "aci_url=http://$ACI_FQDN" >> $GITHUB_OUTPUT # Exportar la URL para pasos posteriores
 
+    # Mostrar la URL de la aplicación al final del Workflow
     - name: Mostrar URL de la aplicación desplegada
       run: echo "¡Tu aplicación está disponible en: ${{ steps.deploy-aci.outputs.aci_url }}"
       if: success()
