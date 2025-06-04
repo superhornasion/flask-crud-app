@@ -15,35 +15,37 @@ jobs:
     runs-on: ubuntu-latest # El sistema operativo donde se ejecutará el pipeline
 
     steps:
-    - name: Checkout code
+    - name: Descargar código
       uses: actions/checkout@v4 # Paso para descargar tu código del repositorio
 
     # ----- PRUEBAS UNITARIAS (OPCIONAL) -----
     # Este bloque asume que tus pruebas son solo de Python y no necesitan la base de datos o Docker
-    - name: Set up Python
+    - name: Instalar Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.9'
 
-    - name: Install Python dependencies
+    - name: Instalar dependencias de Python
       run: |
         pip install -r requirements.txt
         pip install pytest
 
-    - name: Run Unit Tests (Python Only)
+    - name: Ejecutar pruebas unitarias
+      env:
+        DB_CONNECTION_STRING: "dummy_connection_string"
       run: |
-        echo "--- Ejecutando Pruebas Unitarias (Python) ---"
+        echo "--- Ejecutando pruebas unitarias (Python) ---"
         pytest || exit 1
         echo "Pruebas unitarias finalizadas."
     # ----------------------------------------
 
     # ----- CONSTRUCCIÓN Y SUBIDA DE IMAGEN A ACR -----
-    - name: Log in to ACR
+    - name: Conectarse a ACR
       run: |
         # Autenticación en ACR usando las credenciales de administrador (menos seguro, pero evita AAD Service Principal)
         echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.AZURE_CONTAINER_REGISTRY }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
-    - name: Build and push Docker image to ACR
+    - name: Crear y hacerle push a la imagen Docker hacia el ACR
       run: |
         # Construye la imagen Docker desde tu Dockerfile en la raíz del repo
         docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
@@ -51,7 +53,7 @@ jobs:
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
 
     # ----- PASO DE DESPLIEGUE (MANUAL ASISTIDO) -----
-    - name: Provide Manual Deployment Commands for ACI
+    - name: Imprimir comandos manuales de despliegue para ACI
       run: |
         echo "--------------------------------------------------------"
         echo "¡El pipeline ha construido y subido la imagen a ACR!"
