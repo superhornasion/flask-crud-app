@@ -23,5 +23,5 @@ def test_home_page(mock_get_db_connection, client):
     
     response = client.get('/')
     assert response.status_code == 200
-    assert b"Gestión de tareas" in response.data
+    assert b"Gesti\xc3\xb3n de tareas" in response.data
     mock_get_db_connection.assert_called_once()
