@@ -9,6 +9,7 @@ env:
   AZURE_CONTAINER_REGISTRY: topicosregistry2.azurecr.io
   AZURE_RESOURCE_GROUP: topicos-rg
   AZURE_ACI_NAME: api-topicos-container
+  AZURE_ACI_REGION: eastus
 
 jobs:
   crear-testear-desplegar:
@@ -18,13 +19,11 @@ jobs:
     - name: Descargar código
       uses: actions/checkout@v4
 
-    # Autenticarse en Azure usando la Entidad de Servicio
     - name: Autenticarse en Azure
       uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }} # Usa el secreto de GitHub con el JSON de tu Entidad de Servicio
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    # ----- PRUEBAS UNITARIAS (OPCIONAL) -----
     - name: Instalar Python
       uses: actions/setup-python@v5
       with:
@@ -37,32 +36,25 @@ jobs:
 
     - name: Ejecutar pruebas unitarias
       env:
-        DB_CONNECTION_STRING: "dummy_connection_string" # Solo para las pruebas
+        DB_CONNECTION_STRING: "dummy_connection_string"
       run: |
         echo "--- Ejecutando pruebas unitarias (Python) ---"
         pytest || exit 1
         echo "Pruebas unitarias finalizadas."
-    # ----------------------------------------
 
-    # ----- CONSTRUCCIÓN Y SUBIDA DE IMAGEN A ACR -----
     - name: Conectarse a ACR
       run: |
-        # Autenticación en ACR usando las credenciales de administrador (desde secretos)
         echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.AZURE_CONTAINER_REGISTRY }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
     - name: Crear y hacerle push a la imagen Docker hacia el ACR
       run: |
-        # Construye la imagen Docker desde tu Dockerfile en la raíz del repo
         docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
-        # Sube la imagen construida a tu ACR
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
 
-    # ----- DESPLIEGUE AUTOMATIZADO EN ACI -----
     - name: Desplegar/Actualizar instancia ACI
-      id: deploy-aci # Añadimos un ID para poder referenciar la salida
+      id: deploy-aci
       run: |
         echo "--- Eliminando instancia ACI existente (si la hay) ---"
-        # El '|| true' asegura que el pipeline no falle si la instancia no existe
         az container delete \
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --name ${{ env.AZURE_ACI_NAME }} \
@@ -73,7 +65,7 @@ jobs:
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --name ${{ env.AZURE_ACI_NAME }} \
           --image ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest \
-          --dns-name-label myflaskapp-uni \
+          --dns-name-label myflaskapp-uni2 \
           --ports 80 \
           --os-type Linux \
           --cpu 1 \
@@ -81,15 +73,14 @@ jobs:
           --secure-environment-variables DB_CONNECTION_STRING="${{ secrets.ACR_SQL_DB_CONNECTION_STRING }}" \
           --registry-login-server ${{ env.AZURE_CONTAINER_REGISTRY }} \
           --registry-username ${{ secrets.ACR_USERNAME }} \
-          --registry-password ${{ secrets.ACR_PASSWORD }}
+          --registry-password ${{ secrets.ACR_PASSWORD }} \
+          --location ${{ env.AZURE_ACI_REGION }}
 
         echo "--- Despliegue de ACI completado. Recuperando FQDN ---"
-        # Recupera el FQDN de la instancia de ACI recién creada
         ACI_FQDN=$(az container show --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --name ${{ env.AZURE_ACI_NAME }} --query "ipAddress.fqdn" -o tsv)
         echo "¡Tu aplicación estará disponible en: http://$ACI_FQDN"
-        echo "aci_url=http://$ACI_FQDN" >> $GITHUB_OUTPUT # Exportar la URL para pasos posteriores
+        echo "aci_url=http://$ACI_FQDN" >> $GITHUB_OUTPUT
 
-    # Mostrar la URL de la aplicación al final del Workflow
     - name: Mostrar URL de la aplicación desplegada
       run: echo '¡Tu aplicación está disponible en ${{ steps.deploy-aci.outputs.aci_url }}'
       if: success()
