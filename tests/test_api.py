@@ -1,4 +1,4 @@
-# encoding: utf-8 -*-
+# encoding: utf-8
 # tests/test_api.py
 import pytest
 import os
