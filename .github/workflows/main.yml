@@ -77,7 +77,7 @@ jobs:
         echo "     --os-type Linux \\"
         echo "     --cpu 1 \\"
         echo "     --memory 1.5 \\"
-        echo "     --environment-variables DB_CONNECTION_STRING='${{ secrets.AZURE_SQL_DB_CONNECTION_STRING }}'"
+        echo "     --environment-variables DB_CONNECTION_STRING='${{ secrets.ACR_SQL_DB_CONNECTION_STRING }}'"
         echo "--------------------------------------------------------"
         echo "Una vez que el comando 'az container create' termine, tu aplicación estará disponible en la URL FQDN (Fully Qualified Domain Name) que aparecerá en la salida, generalmente algo como:"
         echo "http://myflaskapp-uni.eastus.azurecontainer.io/"
