@@ -73,7 +73,7 @@ jobs:
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --name ${{ env.AZURE_ACI_NAME }} \
           --image ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest \
-          --dns-name-label myflaskapp-uni \
+          --dns-name-label myflaskapp-uni2 \
           --ports 80 \
           --os-type Linux \
           --cpu 1 \
