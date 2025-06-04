@@ -1,4 +1,4 @@
-name: Build, Test (Unit), and Deploy to ACI (Semi-Automated)
+name: Crear imagen, realizar pruebas unitarias y desplegar en ACI (semi-automático)
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
   AZURE_ACI_NAME: api-topicos-container
 
 jobs:
-  build-test-deploy:
+  crear-testear-desplegar:
     runs-on: ubuntu-latest # El sistema operativo donde se ejecutará el pipeline
 
     steps:
