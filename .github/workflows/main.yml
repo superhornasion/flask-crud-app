@@ -6,47 +6,46 @@ on:
       - main # Este pipeline se ejecutará con cada push a la rama 'main'
 
 env:
-  AZURE_CONTAINER_REGISTRY: topicosregistry.azurecr.io # <--- REEMPLAZA CON LA URL COMPLETA DE TU ACR (ej. tuacr.azurecr.io)
-  AZURE_RESOURCE_GROUP: topicos-rg # <--- REEMPLAZA CON EL NOMBRE DE TU GRUPO DE RECURSOS
-  AZURE_ACI_NAME: api-topicos-container # <--- REEMPLAZA CON EL NOMBRE DESEADO PARA TU INSTANCIA ACI
+  AZURE_CONTAINER_REGISTRY: topicosregistry.azurecr.io
+  AZURE_RESOURCE_GROUP: topicos-rg
+  AZURE_ACI_NAME: api-topicos-container
 
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest # El sistema operativo donde se ejecutará el pipeline
 
     steps:
-    - name: Checkout code
+    - name: Descargar código
       uses: actions/checkout@v4 # Paso para descargar tu código del repositorio
 
     # ----- PRUEBAS UNITARIAS (OPCIONAL) -----
     # Este bloque asume que tus pruebas son solo de Python y no necesitan la base de datos o Docker
-    - name: Set up Python
+    - name: Instalar Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9' # Asegúrate de que esta versión de Python sea compatible con tu app y tests
+        python-version: '3.9'
 
-    - name: Install Python dependencies
+    - name: Instalar dependencias de Python
       run: |
         pip install -r requirements.txt
-        # Si usas pytest para tus pruebas unitarias, descomenta la siguiente línea:
-        # pip install pytest
+        pip install pytest
 
-    - name: Run Unit Tests (Python Only)
+    - name: Ejecutar pruebas unitarias
+      env:
+        DB_CONNECTION_STRING: "dummy_connection_string"
       run: |
-        echo "--- Ejecutando Pruebas Unitarias (Python) ---"
-        # Si tienes archivos de pruebas (ej. tests/test_app.py), ejecuta aquí:
-        # pytest
-        echo "Pruebas unitarias finalizadas. (Si no tienes pruebas, esto siempre pasará)."
-        # Si quieres que el pipeline falle si las pruebas no pasan, añade '|| exit 1' al comando de prueba.
+        echo "--- Ejecutando pruebas unitarias (Python) ---"
+        pytest || exit 1
+        echo "Pruebas unitarias finalizadas."
     # ----------------------------------------
 
     # ----- CONSTRUCCIÓN Y SUBIDA DE IMAGEN A ACR -----
-    - name: Log in to ACR
+    - name: Conectarse a ACR
       run: |
         # Autenticación en ACR usando las credenciales de administrador (menos seguro, pero evita AAD Service Principal)
         echo "${{ secrets.ACR_PASSWORD }}" | docker login ${{ env.AZURE_CONTAINER_REGISTRY }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
-    - name: Build and push Docker image to ACR
+    - name: Crear y hacerle push a la imagen Docker hacia el ACR
       run: |
         # Construye la imagen Docker desde tu Dockerfile en la raíz del repo
         docker build . -t ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
@@ -54,7 +53,7 @@ jobs:
         docker push ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest
 
     # ----- PASO DE DESPLIEGUE (MANUAL ASISTIDO) -----
-    - name: Provide Manual Deployment Commands for ACI
+    - name: Imprimir comandos manuales de despliegue para ACI
       run: |
         echo "--------------------------------------------------------"
         echo "¡El pipeline ha construido y subido la imagen a ACR!"
@@ -73,14 +72,13 @@ jobs:
         echo "     --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \\"
         echo "     --name ${{ env.AZURE_ACI_NAME }} \\"
         echo "     --image ${{ env.AZURE_CONTAINER_REGISTRY }}/api-topicos:latest \\"
-        echo "     --dns-name-label api-topicos-alt-deploy \\ # <--- REEMPLAZA CON UN NOMBRE DNS ÚNICO y sencillo (ej. tuapprodmolinaaci)
+        echo "     --dns-name-label myflaskapp-uni \\"
         echo "     --ports 80 \\"
         echo "     --os-type Linux \\"
         echo "     --cpu 1 \\"
         echo "     --memory 1.5 \\"
-        echo "     --environment-variables DB_CONNECTION_STRING=\"${{ secrets.AZURE_SQL_DB_CONNECTION_STRING }}\""
+        echo "     --environment-variables DB_CONNECTION_STRING='${{ secrets.AZURE_SQL_DB_CONNECTION_STRING }}'"
         echo "--------------------------------------------------------"
         echo "Una vez que el comando 'az container create' termine, tu aplicación estará disponible en la URL FQDN (Fully Qualified Domain Name) que aparecerá en la salida, generalmente algo como:"
-        echo "http://api-topicos-alt-deploy.<tu_region_azure>.azurecontainer.io/"
-        echo "(Asegúrate de reemplazar '<tu_region_azure>' con la región de Azure donde creaste el ACI, ej. eastus, westus, etc.)"
+        echo "http://myflaskapp-uni.eastus.azurecontainer.io/"
         echo "--------------------------------------------------------"
